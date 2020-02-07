@@ -21,6 +21,13 @@ if ($txt) {
     // error opening the file.
 }
 
+/**
+ * Verifica se a linha de texto é iniciada com a Data
+ *
+ * @param String $message
+ *
+ * @return bool
+ */
 function startWithDate($message) {
     $matches = [];
     $pattern = "/^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)(\d{2}|\d{4}) ([0-9][0-9]):([0-9][0-9]) -/";
@@ -33,6 +40,13 @@ function startWithDate($message) {
     
 }
 
+/**
+ * Verifica se a linha de texto é iniciada com um Autor
+ *
+ * @param  String $message
+ *
+ * @return bool
+ */
 function startWithAuthor($message) {
     $matches = [];
     $patterns = [
@@ -57,6 +71,13 @@ function startWithAuthor($message) {
 
 }
 
+/**
+ * Verifica se há perguntas na mensagem.
+ *
+ * @param  string $message
+ *
+ * @return bool
+ */
 function hasQuestion($message){
     $pattern = "/^(\b(?:qual|quais|quando|onde|como|quem*)\b)|(\?)/i"; 
     preg_match($pattern, $message, $matches);
@@ -66,6 +87,13 @@ function hasQuestion($message){
     return true;
 }
 
+/**
+ * Divide a linha nos elementos solicitados para o CSV
+ *
+ * @param String $line
+ *
+ * @return array
+ */
 function getDataPoint($line){
     $isQuestion = false;
     $splitLine = explode(' - ', $line);
