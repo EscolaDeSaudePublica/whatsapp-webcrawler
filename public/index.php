@@ -7,13 +7,13 @@ $date = null;
 $author = null;
 $message = null;
 if ($txt) {
-    getTxtData($txt);
+    $parsedData = getTxtData($txt, $path);
     fclose($txt);
     $csv = fopen('./exemplo_conversa.csv', 'w');
     if(!flock($csv, LOCK_EX)) {
         error_log('Cannot get lock!');
     } else {
-        fillcsv($csv);
+        fillcsv($csv, $parsedData);
         fclose($csv);
     }
 } else {
@@ -56,6 +56,15 @@ function startWithAuthor($message) {
 
 }
 
+function hasQuestion($message){
+    $pattern = "/^[^.?!]*?\?/";
+    preg_match($pattern, $message, $matches);
+    if(count($matches) == 0) {
+        return false;
+    }
+    return true;
+}
+
 function getDataPoint($line){
     $isQuestion = false;
     $splitLine = explode(' - ', $line);
@@ -92,42 +101,36 @@ function transformDate($date) {
     return implode('-', array_reverse(explode('/', $date)));
 }
 
-function getTxtData($txt){
+function getTxtData($txt, $path){
     $messageBuffer = [];
-    $data = [];
+    $parsedData = [];
+    $date = null;
+    $author = null;
+    $message = null;
+    $isQuestion = false;
     while(($line = fgets($txt, filesize($path))) !== false) {
         $line = trim($line);
         if(startWithDate($line)) {
             if(count($messageBuffer) > 0) {
-                array_push($data, [$date, $author, implode(' ', $messageBuffer)]);        
+                array_push($parsedData, [$date, $author, $isQuestion, implode(' ', $messageBuffer)]);        
             }
             $messageBuffer = [];
             $dataPoint = getDataPoint($line);
             $date = $dataPoint['date'];
             $author = $dataPoint['author'];
             $message = $dataPoint['message'];
-            $isQuestion = $dataPoint['message'];
+            $isQuestion = $dataPoint['isQuestion'];
             array_push($messageBuffer, $message);
         } else {
             array_push($messageBuffer, $line);
         }
     };
-    return data;
+    return $parsedData;
 }
 
-function fillcsv($csv){
-    fputcsv($csv, ['date', 'author', 'message']);
+function fillcsv($csv, $parsedData){
+    fputcsv($csv, ['date', 'author', 'isQuestion', 'message']);
     foreach($parsedData as $row) {
         fputcsv($csv, $row);
-        print_r($row);
     }
-}
-
-function hasQuestion($message){
-    $pattern = "/^[^.?!]*?\?/";
-    preg_match($pattern, $message, $matches);
-    if(count($matches)) {
-        return false;
-    }
-    return true;
 }
