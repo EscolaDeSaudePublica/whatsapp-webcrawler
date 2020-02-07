@@ -6,6 +6,7 @@ $txt = fopen($path, "r");
 $date = null;
 $author = null;
 $message = null;
+
 if ($txt) {
     $parsedData = getTxtData($txt, $path);
     fclose($txt);
@@ -57,7 +58,7 @@ function startWithAuthor($message) {
 }
 
 function hasQuestion($message){
-    $pattern = "/^[^.?!]*?\?/";
+    $pattern = "/^(\b(?:qual|quais|quando|onde|como|quem*)\b)|(\?)/i"; 
     preg_match($pattern, $message, $matches);
     if(count($matches) == 0) {
         return false;
@@ -84,10 +85,11 @@ function getDataPoint($line){
         if(hasQuestion($message)) {
             $isQuestion = true;
         }
-
     } else {
         $author = null;
     }
+
+   
 
     return [
         'date' => $date,
@@ -112,9 +114,14 @@ function getTxtData($txt, $path){
         $line = trim($line);
         if(startWithDate($line)) {
             if(count($messageBuffer) > 0) {
-                array_push($parsedData, [$date, $author, $isQuestion, implode(' ', $messageBuffer)]);        
+                $buffer = implode(' ', $messageBuffer); 
+                if(hasQuestion($buffer)) {
+                    $isQuestion = true;
+                } 
+                array_push($parsedData, [$date, $author, $isQuestion, $buffer]);                      
             }
             $messageBuffer = [];
+            $isQuestion = false;
             $dataPoint = getDataPoint($line);
             $date = $dataPoint['date'];
             $author = $dataPoint['author'];
