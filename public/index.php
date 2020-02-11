@@ -82,9 +82,9 @@ function hasQuestion($message){
     $pattern = "/^(\b(?:qual|quais|quando|onde|como|quem*)\b)|(\?)/i"; 
     preg_match($pattern, $message, $matches);
     if(count($matches) == 0) {
-        return false;
+        return "false";
     }
-    return true;
+    return "true";
 }
 
 /**
@@ -127,6 +127,13 @@ function getDataPoint($line){
     ];
 }
 
+/**
+ * Transforma a data para o padrão internacional
+ *
+ * @param  string $date
+ *
+ * @return string
+ */
 function transformDate($date) {
     return implode('-', array_reverse(explode('/', $date)));
 }
@@ -137,19 +144,14 @@ function getTxtData($txt, $path){
     $date = null;
     $author = null;
     $message = null;
-    $isQuestion = false;
     while(($line = fgets($txt, filesize($path))) !== false) {
         $line = trim($line);
         if(startWithDate($line)) {
             if(count($messageBuffer) > 0) {
-                $buffer = implode(' ', $messageBuffer); 
-                if(hasQuestion($buffer)) {
-                    $isQuestion = true;
-                } 
-                array_push($parsedData, [$date, $author, $isQuestion, $buffer]);                      
+                $buffer = implode(' ', $messageBuffer);
+                array_push($parsedData, [$date, $author, hasQuestion($buffer), $buffer]);                      
             }
             $messageBuffer = [];
-            $isQuestion = false;
             $dataPoint = getDataPoint($line);
             $date = $dataPoint['date'];
             $author = $dataPoint['author'];
@@ -163,6 +165,14 @@ function getTxtData($txt, $path){
     return $parsedData;
 }
 
+/**
+ *  preenche o arquivo CSV com os dados repassados.
+ *
+ * @param  mixed $csv
+ * @param  mixed $parsedData
+ *
+ * @return void
+ */
 function fillcsv($csv, $parsedData){
     fputcsv($csv, ['date', 'author', 'isQuestion', 'message']);
     foreach($parsedData as $row) {
