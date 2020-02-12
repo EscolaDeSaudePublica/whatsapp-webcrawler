@@ -1,4 +1,5 @@
 import re
+import datetime
 
 def startsWithDate(s):
     '''
@@ -48,8 +49,8 @@ def getDataPoint(line):
         Divide a linha nos elementos solicitados para o CSV
     '''
     splitLine = line.split(' - ')
-    dateTime = splitLine[0]   
-    date, time = dateTime.split(' ')
+    dateTime = splitLine[0]
+    
     message = ' '.join(splitLine[1:])
     
     if startsWithAuthor(message):
@@ -58,7 +59,7 @@ def getDataPoint(line):
         message = ' '.join(splitMessage[1:])
     else:
         author = None
-    return date, time, author, message
+    return dateTime, author, message
 
 def getData(conversationPath):
     '''
@@ -68,7 +69,7 @@ def getData(conversationPath):
     with open(conversationPath, encoding="utf-8") as fp:
         fp.readline()
         messageBuffer = []
-        date, time, author = None, None, None
+        dateTime, author = None, None
         
         while True:
             line = fp.readline() 
@@ -78,10 +79,13 @@ def getData(conversationPath):
             if startsWithDate(line):
                 if len(messageBuffer) > 0:
                     buffer = ' '.join(messageBuffer)
-                    parsedData.append([date, time, author, hasQuestion(buffer), buffer])
+                    parsedData.append([dateTime, author, hasQuestion(buffer), buffer])
                 messageBuffer.clear()
-                date, time, author, message = getDataPoint(line)
+                dateTime, author, message = getDataPoint(line)
                 messageBuffer.append(message)
             else:
                 messageBuffer.append(line)
     return parsedData
+
+def convertData(datetime_str):
+    return datetime.datetime.strptime(datetime_str, '%d/%m/%Y')

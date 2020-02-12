@@ -1,9 +1,16 @@
 # Whatsapp Web-crawler
 
-## Conceito
-
 ## Iniciar
-    
+    Esse projeto foi desenvolvido em:
+    *   Python 3.6.9
+    *   Anaconda 4.8.2
+    Os pacotes utilizados estão no arquivo package-list.txt
+
+    Para Iniciar basta rodar o seguinte comando:
+    ```bash
+        python main.py /caminho/do/arquivo-de-conversa.txt
+    ```
+
 ## Palavras para excluir:
 
 As seguintes palavras deverão ser excluídas das palavras mais utilizadas, pois não fazem parte do contexto da conversa.
