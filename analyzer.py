@@ -30,43 +30,38 @@ def hasQuestion(s):
     return False
 
 def getDataPoint(line):
-    # line = 18/06/17, 22:47 - Loki: Why do you have 2 numbers, Banner?
+    isQuestion = False
+    splitLine = line.split(' - ')
+    dateTime = splitLine[0]   
+    date, time = dateTime.split(' ')
+    message = ' '.join(splitLine[1:])
     
-    splitLine = line.split(' - ') # splitLine = ['18/06/17, 22:47', 'Loki: Why do you have 2 numbers, Banner?']
-    
-    dateTime = splitLine[0] # dateTime = '18/06/17, 22:47'
-    
-    date, time = dateTime.split(' ') # date = '18/06/17'; time = '22:47'
-    
-    message = ' '.join(splitLine[1:]) # message = 'Loki: Why do you have 2 numbers, Banner?'
-    
-    if startsWithAuthor(message): # True
-        splitMessage = message.split(': ') # splitMessage = ['Loki', 'Why do you have 2 numbers, Banner?']
-        author = splitMessage[0] # author = 'Loki'
-        message = ' '.join(splitMessage[1:]) # message = 'Why do you have 2 numbers, Banner?'
+    if startsWithAuthor(message):
+        splitMessage = message.split(': ')
+        author = splitMessage[0]
+        message = ' '.join(splitMessage[1:])
+        isQuestion = hasQuestion(message)
     else:
         author = None
-    return date, time, author, message
-
+    return date, time, author, isQuestion, message
 def getData(conversationPath):
-    parsedData = [] # List to keep track of data so it can be used by a Pandas dataframe
+    parsedData = []
     with open(conversationPath, encoding="utf-8") as fp:
-        fp.readline() # Skipping first line of the file (usually contains information about end-to-end encryption)
-            
-        messageBuffer = [] # Buffer to capture intermediate output for multi-line messages
-        date, time, author = None, None, None # Intermediate variables to keep track of the current message being processed
+        fp.readline()
+        messageBuffer = []
+        date, time, author, isQuestion = None, None, None, False
         
         while True:
             line = fp.readline() 
-            if not line: # Stop reading further if end of file has been reached
+            if not line:
                 break
-            line = line.strip() # Guarding against erroneous leading and trailing whitespaces
-            if startsWithDate(line): # If a line starts with a Date Time pattern, then this indicates the beginning of a new message
-                if len(messageBuffer) > 0: # Check if the message buffer contains characters from previous iterations
-                    parsedData.append([date, time, author, ' '.join(messageBuffer)]) # Save the tokens from the previous message in parsedData
-                messageBuffer.clear() # Clear the message buffer so that it can be used for the next message
-                date, time, author, message = getDataPoint(line) # Identify and extract tokens from the line
-                messageBuffer.append(message) # Append message to buffer
+            line = line.strip()
+            if startsWithDate(line):
+                if len(messageBuffer) > 0:
+                    parsedData.append([date, time, author, ' '.join(messageBuffer)])
+                messageBuffer.clear()
+                date, time, author, message, isQuestion = getDataPoint(line)
+                messageBuffer.append(message)
             else:
-                messageBuffer.append(line) # If a line doesn't start with a Date Time pattern, then it is part of a multi-line message. So, just append to buffer
+                messageBuffer.append(line)
     return parsedData
