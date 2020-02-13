@@ -56,6 +56,7 @@ def getDataPoint(line):
     splitLine = line.split(' - ')
     dateTime = convertDate(splitLine[0])
     date, time = splitLine[0].split(' ')
+    hour = findHour(time)
     weekday = findWeekday(date)
     message = ' '.join(splitLine[1:])
     
@@ -65,7 +66,7 @@ def getDataPoint(line):
         message = ' '.join(splitMessage[1:])
     else:
         author = None
-    return dateTime, time, weekday, author, message
+    return dateTime, hour, weekday, author, message
 
 def getData(conversationPath):
     '''
@@ -75,7 +76,7 @@ def getData(conversationPath):
     with open(conversationPath, encoding="utf-8") as fp:
         fp.readline()
         messageBuffer = []
-        dateTime, time, weekday, author = None, None, None, None
+        dateTime, hour, weekday, author = None, None, None, None
         
         while True:
             line = fp.readline() 
@@ -85,9 +86,9 @@ def getData(conversationPath):
             if startsWithDate(line):
                 if len(messageBuffer) > 0:
                     buffer = ' '.join(messageBuffer)
-                    parsedData.append([dateTime, time, weekday, author, hasQuestion(buffer), buffer])
+                    parsedData.append([dateTime, hour, weekday, author, hasQuestion(buffer), buffer])
                 messageBuffer.clear()
-                dateTime, time, weekday, author, message = getDataPoint(line)
+                dateTime, hour, weekday, author, message = getDataPoint(line)
                 messageBuffer.append(message)
             else:
                 messageBuffer.append(line)
@@ -99,3 +100,6 @@ def convertDate(datetime_str):
 def findWeekday(date):
     weekdayNumber = datetime.datetime.strptime(date, '%d/%m/%Y').weekday()
     return calendar.day_name[weekdayNumber]
+
+def findHour(hour):
+    return datetime.datetime.strptime(hour, '%H:%M').replace(minute=0).strftime('%H:%M')
