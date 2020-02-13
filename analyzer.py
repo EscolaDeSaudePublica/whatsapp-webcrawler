@@ -1,5 +1,6 @@
 import re
 import datetime
+import calendar
 
 def startsWithDate(s):
     '''
@@ -18,12 +19,16 @@ def startsWithAuthor(s):
         Verifica se a linha de texto é iniciada com um Autor
     '''
     patterns = [
-        '([\w]+):',                        # First Name
-        '([\w]+[\s]+[\w]+):',              # First Name + Last Name
-        '([\w]+[\s]+[\w]+[\s]+[\w]+):',    # First Name + Middle Name + Last Name
-        '([+]\d{2} \d{5} \d{5}):',         # Mobile Number (India)
-        '([+]\d{2} \d{3} \d{3} \d{4}):',   # Mobile Number (US)
-        '([+]\d{2} \d{4} \d{7})'           # Mobile Number (Europe)
+        "([\w]+[\s]+[\w]+[\s]+[\w]+):",          # First Name + Middle Name + Last Name
+        "([\w]+[\s]+[\w]+):",                    # First Name + Last Name
+        "([\w]+):",                              # First Name
+        "([+]\d{2} \d{2} \d{4}-\d{4}):",         # Mobile Number (Brazil)
+        "([+]\d{2} \d{2} \d{1} \d{4}-\d{4}):",   # Mobile Number (Brazil) w/ 9º digit
+        "([+]\d{2} \d{2} \d{1} \d{8}):",         # Mobile Number (Brazil) w/ 9º digit without spacing
+        "([+]\d{2} \d{2} \d{9}):",                 # Mobile Number (Brazil) w/ 9º digit without spacing in all numbers
+        "([+]\d{2} \d{5} \d{5}):",               # Mobile Number (India)
+        "([+]\d{2} \d{3} \d{3} \d{4}):",         # Mobile Number (US)
+        "([+]\d{2} \d{4} \d{7})"                 # Mobile Number (Europe)
     ]
     pattern = '^' + '|'.join(patterns)
     result = re.match(pattern, s)
@@ -49,8 +54,9 @@ def getDataPoint(line):
         Divide a linha nos elementos solicitados para o CSV
     '''
     splitLine = line.split(' - ')
-    dateTime = splitLine[0]
-    
+    dateTime = convertDate(splitLine[0])
+    date, time = splitLine[0].split(' ')
+    weekday = findWeekday(date)
     message = ' '.join(splitLine[1:])
     
     if startsWithAuthor(message):
@@ -59,7 +65,7 @@ def getDataPoint(line):
         message = ' '.join(splitMessage[1:])
     else:
         author = None
-    return dateTime, author, message
+    return dateTime, time, weekday, author, message
 
 def getData(conversationPath):
     '''
@@ -69,7 +75,7 @@ def getData(conversationPath):
     with open(conversationPath, encoding="utf-8") as fp:
         fp.readline()
         messageBuffer = []
-        dateTime, author = None, None
+        dateTime, time, weekday, author = None, None, None, None
         
         while True:
             line = fp.readline() 
@@ -79,13 +85,17 @@ def getData(conversationPath):
             if startsWithDate(line):
                 if len(messageBuffer) > 0:
                     buffer = ' '.join(messageBuffer)
-                    parsedData.append([dateTime, author, hasQuestion(buffer), buffer])
+                    parsedData.append([dateTime, time, weekday, author, hasQuestion(buffer), buffer])
                 messageBuffer.clear()
-                dateTime, author, message = getDataPoint(line)
+                dateTime, time, weekday, author, message = getDataPoint(line)
                 messageBuffer.append(message)
             else:
                 messageBuffer.append(line)
     return parsedData
 
-def convertData(datetime_str):
-    return datetime.datetime.strptime(datetime_str, '%d/%m/%Y')
+def convertDate(datetime_str):
+    return datetime.datetime.strptime(datetime_str, '%d/%m/%Y %H:%M').strftime('%Y-%m-%d %H:%M:%S')
+
+def findWeekday(date):
+    weekdayNumber = datetime.datetime.strptime(date, '%d/%m/%Y').weekday()
+    return calendar.day_name[weekdayNumber]

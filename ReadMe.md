@@ -10,7 +10,6 @@
     ```bash
         python main.py /caminho/do/arquivo-de-conversa.txt
     ```
-
 ## Palavras para excluir:
 
 As seguintes palavras deverão ser excluídas das palavras mais utilizadas, pois não fazem parte do contexto da conversa.
